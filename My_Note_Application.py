@@ -15,17 +15,18 @@ class MyNote(Frame):
 
     def note_interface(self):
 
+        # contains buttons for each new category
         self.categories_list = []
 
-        self.top_color = "#FFBB00"
-        # tiny bit darker: "#9BA0A1"
+        # keep color: FFBB00
+        self.top_color = "#BBD1EA"
 
     # main frame of task bar on top side
-        top_frame = Frame(self.master, heigh="110", bg=self.top_color, bd="10")
+        top_frame = Frame(self.master, heigh="120", bg=self.top_color, bd="10")
         top_frame.pack_propagate(False)
         top_frame.pack(side=TOP, fill=X)
 
-        self.MyNoteTitle = Label(top_frame, bg=self.top_color, fg="#000000")
+        self.MyNoteTitle = Label(top_frame, bg=self.top_color)
         self.photo0 = PhotoImage(file="title2.gif")
         self.MyNoteTitle.config(image=self.photo0)
         self.MyNoteTitle.pack(side=LEFT, padx=10)
@@ -50,16 +51,15 @@ class MyNote(Frame):
         self.delete_button.grid(padx=5, column=2, row=0)
 
     # main frame of sidebar on left side
-
         self.sidebar_frame = Frame(self.master, width=250, bg='#e5e5e5')
-        self.sidebar_frame.pack(side=LEFT, fill=Y)
-        self.sidebar_frame.pack_propagate(FALSE)
+        self.sidebar_frame.pack(fill=Y, side=LEFT)
+        self.sidebar_frame.pack_propagate(True)
 
     # note title frame
-        self.note_title_frame = Frame(self.master, bg="#f6f6f6")
+        self.note_title_frame = Frame(self.master, bg="#f6f6f6", height=50)
         self.note_title_frame.pack(expand=False, fill=X)
 
-        self.note_title_label = Label(self.note_title_frame, text="Test Title", font="Helvetica 15 bold",
+        self.note_title_label = Label(self.note_title_frame, text="Home", font="Helvetica 15 bold",
                                       bg="#f6f6f6")
         self.note_title_label.pack(side=LEFT, padx=10, pady=10)
 
@@ -67,28 +67,28 @@ class MyNote(Frame):
         self.noteFrame = Frame(self.master, bg="#f6f6f6")
         self.noteFrame.pack(expand=True, fill=BOTH, pady=0, padx=0)
 
-        # scrollbar for text box
-        self.text_box_scrollbar = Scrollbar(self.noteFrame, bd=0)
-        self.text_box_scrollbar.pack(fill=Y, side=RIGHT)
+    # Home
+        home_title = Frame(self.sidebar_frame, width="250", height="50", bg="#dbdbdb")
+        home_title.pack()
+        home_title.pack_propagate(False)
 
-        self.textbox = Text(self.noteFrame, bg="#f6f6f6", fg="#444444", relief="flat", spacing3=8, wrap=WORD, bd=0,
-                            yscrollcommand=self.text_box_scrollbar.set, width=1, height=1)
-        self.textbox.pack(fill=BOTH, expand=True, padx=15, pady=10)
-        self.text_box_scrollbar.config(command=self.textbox.yview)
-
-        # alters the tab length to only 4 spaces
-        font = tkfont.Font(font=['font'])
-        tab_width = font.measure(' ' * 5)
-        self.textbox.config(tabs=(tab_width,))
+        self.home_button = Button(home_title, text="  Home", font="Verdana 11", bg="#dbdbdb",
+                                             fg="#444444", command=self.home_menu, width="250", height="50", bd=0,
+                                             anchor='w')
+        self.home_button.pack(side=LEFT)
+        self.color_change_hover(self.home_button)
 
     # "Categories" section
         # "categopries" label
-        categories_title = Frame(self.sidebar_frame, width="250", height="50", bg="#d6d6d6")
+        categories_title = Frame(self.sidebar_frame, width="250", height="50", bg="#dbdbdb")
         categories_title.pack()
-        categories_title.pack_propagate(FALSE)
-        categories = Button(categories_title, text="  Notes", font="Verdana 11", bg="#d6d6d6", fg="#444444",
-                            command=self.pack_unpack, width="250", height="50", bd=0, anchor='w')
-        categories.pack(side=LEFT)
+        categories_title.pack_propagate(False)
+
+        self.categories_main_button = Button(categories_title, text="  Notes    ⏶", font="Verdana 11", bg="#dbdbdb",
+                                             fg="#444444", command=self.pack_unpack, width="250", height="50", bd=0,
+                                             anchor='w')
+        self.categories_main_button.pack(side=LEFT)
+        self.color_change_hover(self.categories_main_button)
 
         # "New Category" box
         self.categories_new = Frame(self.sidebar_frame, width="250", height="50", bg="#e5e5e5")
@@ -101,41 +101,59 @@ class MyNote(Frame):
 
         self.pack_settings_button()
 
+    # Home menu
+    def home_menu(self):
+        self.note_title_label.configure(text="Home")
+        self.clear_note_frame()
+        print("Home")
+
+    # color change on hover over button
+    def color_change_hover(self, widget):
+        def on_enter(event):
+            widget.configure(bg="#d1d1d1")
+        def on_leave(event):
+            widget.configure(bg="#dbdbdb")
+
+        widget.bind("<Enter>", on_enter)
+        widget.bind("<Leave>", on_leave)
+
+
     def pack_unpack(self):
         if self.categories_new.winfo_manager():
+            self.categories_main_button.configure(text="  Notes     ⏷")
             self.destroy_settings_button()
 
             self.categories_new.forget()
             for button in self.categories_list:
-                button.forget()
-            self.category_frame.forget()
+                self.category_frame.destroy()
+                button.destroy()
+                self.category_frame.destroy()
 
             self.pack_settings_button()
         else:
+            self.categories_main_button.configure(text="  Notes     ⏶")
             self.destroy_settings_button()
 
             self.categories_new.pack(side=TOP)
-            for button in self.categories_list:
-                button.pack(side=BOTTOM)
-            self.category_frame.pack()
-
-            self.pack_settings_button()
+            self.update_category_buttons()
 
     # packs buttons for each saved category in new session
-    def update_category_buttons(self, delete=False):
+    def update_category_buttons(self):
+
         for dir in os.listdir(os.getcwd() + "\\note_categories\\"):
             self.destroy_settings_button()
             self.create_category(dir, method="old")
 
     # "Settings" button
     def pack_settings_button(self):
-        self.settingsButton = Frame(self.sidebar_frame, width="250", height="50", bg="#d6d6d6")
+        self.settingsButton = Frame(self.sidebar_frame, width="250", height="50", bg="#dbdbdb")
         self.settingsButton.pack()
         self.settingsButton.pack_propagate(FALSE)
         self.settings = Button(self.settingsButton, text="  Settings", font="Verdana 11", width="250",
-                              height="50", fg="#444444", bg="#d6d6d6", relief="flat", anchor="w", bd=0,
+                              height="50", fg="#444444", bg="#dbdbdb", relief="flat", anchor="w", bd=0,
                                command=self.settings_page)
         self.settings.pack()
+        self.color_change_hover(self.settings)
 
     def destroy_settings_button(self):
         self.settingsButton.destroy()
@@ -166,17 +184,16 @@ class MyNote(Frame):
             pass
 
         # frame that contains all user created categories
-        self.category_frame = Frame(self.sidebar_frame, width="250", height="50", bg="#000000")
+        self.category_frame = Frame(self.sidebar_frame, width="250", height="50", bg="pink")
         self.category_frame.pack()
         self.category_frame.pack_propagate(False)
 
         if name.lower().endswith(".txt"):
             name = name[:-4]
 
-        print("anotha one")
-
+        # ☰ ⌦
         # adds the button and it's name to list to be accessed again
-        self.categories_list.append(Button(self.category_frame, text="    ✏    "+name,
+        self.categories_list.append(Button(self.category_frame, text="    ❐    "+name,
                                            command=partial(self.open_category, name), height="50", fg="#444444",
                                            bg="#e5e5e5", relief="flat", anchor="w", font="Verdana 10", width="250",
                                            bd=0))
@@ -191,6 +208,37 @@ class MyNote(Frame):
 
     # acceses category clicked
     def open_category(self, category_name):
+
+        # saves previously open note
+        '''
+        cwd = os.getcwd()
+        title_get = self.note_title_label.cget("text")
+
+        last_open = cwd + "\\note_categories\\" + title_get + ".txt"
+        self.save_note(last_open)
+        '''
+
+        try:
+            self.text_box_scrollbar.destroy()
+            self.textbox.destroy()
+        except AttributeError:
+            pass
+
+        # scrollbar for text box
+        self.text_box_scrollbar = Scrollbar(self.noteFrame, bd=0)
+        self.text_box_scrollbar.pack(fill=Y, side=RIGHT)
+
+        self.textbox = Text(self.noteFrame, bg="#f6f6f6", fg="#444444", relief="flat", spacing3=8, wrap=WORD, bd=0,
+                            yscrollcommand=self.text_box_scrollbar.set, width=1, height=1, undo=True)
+        self.textbox.pack(fill=BOTH, expand=True, padx=15, pady=10)
+        self.text_box_scrollbar.config(command=self.textbox.yview)
+
+        # alters the tab length to only 4 spaces
+        font = tkfont.Font(font=['font'])
+        tab_width = font.measure(' ' * 5)
+        self.textbox.config(tabs=(tab_width,))
+
+
         self.textbox.delete(1.0, END)
 
         cwd = os.getcwd()
@@ -207,9 +255,13 @@ class MyNote(Frame):
         # gets contents of category if file exists. If doesnt exist, makes file for category
         try:
             with open(self.file_name, 'r')as file:
-                contents = file.readlines()
+                contents = (list(file.readlines()))
+                try:
+                    del contents[-1]
+                except IndexError:
+                    pass
+                contents = ''.join(contents)
                 self.textbox.insert(INSERT, ''.join(contents))
-                print("in " + category_name + ": " + str(contents))
         except FileNotFoundError:
             with open(self.file_name, 'w'):
                 pass
@@ -217,6 +269,26 @@ class MyNote(Frame):
         self.MyNoteTitle.configure(text=category_name)
         self.note_title_label.configure(text=category_name)
         print("\nNow editing: " + category_name)
+        # print("in " + category_name + ": " + str(contents) + "\n")
+
+    def clear_note_frame(self):
+        try:
+            self.textbox.forget()
+            self.text_box_scrollbar.forget()
+        except AttributeError:
+            pass
+
+    # save note automatically
+    def save_note_auto(self):
+
+        try:
+            with open(self.file_name, 'w')as file:
+                file.write(self.textbox.get(1.0, END))
+        except AttributeError:
+            pass
+        print("Note saved automatically.")
+        root.after(10000)
+        self.save_note_auto()
 
     # save note manually
     def save_note(self, file_name):
@@ -225,15 +297,18 @@ class MyNote(Frame):
                 file.write(self.textbox.get(1.0, END))
         except AttributeError:
             pass
-        print("Note saved.")
+        print(file_name + " saved.")
+        self.last_saved_update()
 
+    # label notifying of last saved date and time
+    def last_saved_update(self):
         # "last note saved: 3-15-17" on bottom of textbox for example
         try:
             self.last_saved_label.destroy()
         except AttributeError:
-            self.last_saved_label = Label(self.noteFrame, font="Verdana 7", bg="#f6f6f6", fg="#444444",
+            self.last_saved_label = Label(self.note_title_frame, font="Verdana 7", bg="#f6f6f6", fg="#444444",
                                           text=(str(time.strftime("Last saved: " + '%B %d, %Y' + ' at ' + '%I:%M %p'))))
-            self.last_saved_label.pack(side=LEFT, fill=X, expand=False)
+            self.last_saved_label.pack(side=RIGHT, expand=False, padx=10)
 
     def delete_note(self, file_name):
         os.remove(file_name)
@@ -274,21 +349,26 @@ class MyNote(Frame):
 
     def settings_page(self):
         self.note_title_label.configure(text="Settings")
-        self.textbox.forget()
+        self.clear_note_frame()
         Settings()
 
 
-class Settings():
+class Settings:
     def __init__(self):
-        print("settings to come!")
+        print("Settings")
+        frame = Frame()
+        frame.pack(side=TOP)
+
+        label = Label(frame, text="Color Scheme")
+        label.pack()
 
 
 
 root = Tk()
 root.title("My Notes")
 root.minsize(600, 400)
-root.geometry("720x480")
-root.iconbitmap(default='note_icon (1).ico')
+root.geometry("820x580")
+root.iconbitmap(default='note_icon_converted.ico')
 
 a = MyNote(root)
 
